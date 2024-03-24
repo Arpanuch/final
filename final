@@ -1,0 +1,144 @@
+import 'package:flutter/material.dart';
+import 'package:dio/dio.dart';
+import 'dart:convert';
+
+void main() {
+  runApp(const MyApp());
+}
+
+class MyApp extends StatelessWidget {
+  const MyApp({super.key});
+
+  // This widget is the root of your application.
+  @override
+  Widget build(BuildContext context) {
+    return MaterialApp(
+      title: 'Flutter App',
+      home: const MyHomePage(title: 'Webby Fondue ระบบรายงานเว็บเลวๆ'),
+      
+      
+    );
+  }
+}
+
+class MyHomePage extends StatefulWidget {
+  const MyHomePage({super.key, required this.title});
+
+
+  final String title;
+
+  @override
+  State<MyHomePage> createState() => _MyHomePageState();
+}
+
+class _MyHomePageState extends State<MyHomePage> {
+// State variable
+
+  List<Wine>? _wines;
+
+// เมธอดสำหรับโหลดข้อมูล
+
+  void _getCountries() async {
+    var dio = Dio(BaseOptions(responseType: ResponseType.plain));
+
+    var response = await dio.get('https://api.sampleapis.com/wines/reds');
+
+    List list = jsonDecode(response.data);
+
+    _wines = list.map((e) {
+      return Wine(e['winery'], e['wine'], e['location'], e['image'],
+          e["rating"]['average'], e["rating"]['reviews']);
+    }).toList();
+
+    setState(() {});
+  }
+
+  @override
+  void initState() {
+    super.initState();
+
+    _getCountries();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: Text(widget.title),
+      ),
+      body: Center(
+        child: _wines == null
+            ? const CircularProgressIndicator()
+            : ListView.builder(
+                itemCount: _wines!.length,
+                itemBuilder: (context, index) {
+                  return // button to show the details of the wine dialog
+                      Column(
+                    children: [
+                      ElevatedButton(
+                        onPressed: () {
+                          showDialog(
+                            context: context,
+                            builder: (context) {
+                              return AlertDialog(
+                                title: Text(_wines![index].winery),
+                                content: Column(
+                                  children: [
+                                    Image.network(_wines![index].image),
+                                    const Text("\n"),
+                                    Text("id: " + _wines![index].wine),
+                                    const Divider(
+                                      color: Colors.black,
+                                    ),
+                                    Text(
+                                        "title: " + _wines![index].location),
+                                    // hr
+                                    const Divider(
+                                      color: Colors.black,
+                                    ),
+                                    Text("subtitle: " + _wines![index].average),
+                                    Text("image: " + _wines![index].reviews),
+                                    const Divider(
+                                      color: Colors.black,
+                                    ),
+                                  ],
+                                ),
+                              );
+                            },
+                          );
+                        },
+                        child: ListTile(
+                          leading: Image.network(_wines![index].image),
+                          title: Text(_wines![index].winery),
+                          subtitle: Text(_wines![index].wine),
+                          trailing: Text(_wines![index].location),
+                        ),
+                      ),
+                      const SizedBox(
+                        height: 10,
+                      )
+                    ],
+                  );
+                },
+              ),
+      ),
+    );
+  }
+}
+
+class Wine {
+  final String winery;
+
+  final String wine;
+
+  final String location;
+
+  final String image;
+
+  final String average;
+
+  final String reviews;
+
+  Wine(this.winery, this.wine, this.location, this.image, this.average,
+      this.reviews);
+}
